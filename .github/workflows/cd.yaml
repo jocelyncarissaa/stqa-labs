@@ -1,0 +1,63 @@
+name: Deploy to Pages Pipeline
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.1'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Start Flask App
+        run: |
+          # The '&' runs it in the background
+          python app.py &
+          
+          # Wait for it to be ready
+          echo "Waiting for server..."
+          for i in {1..10}; do
+            curl -s http://127.0.0.1:5000 > /dev/null && echo "Server is up!" && break
+            sleep 2
+          done
+
+      - name: Run Selenium Tests (Behave)
+        run: behave -f html-pretty -o index.html
+
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
+
+  deploy:
+    needs: deploy-report
+    if: always()
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
