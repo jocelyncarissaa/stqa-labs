@@ -42,9 +42,12 @@ def handle_pets():
     if request.method == 'GET':
         category = request.args.get('category')
         if category:
-            matching_pets = [pet for pet in pets.values() if pet['category'] == category]
+            matching_pets = [
+                pet for pet in pets.values()
+                if pet.get('category', '').lower() == category.lower()
+            ]
             return jsonify(matching_pets)
-        
+
         return jsonify(list(pets.values()))
 
 # API endpoint for updating a pet
