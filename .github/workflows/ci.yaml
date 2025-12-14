@@ -21,4 +21,4 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Lint with Flake8
-        run: flake8 . --count --select=E1,F4 --show-source --statistics
+        run: flake8 14_devops_github_actions --count --select=E1,F4 --show-source --statistics
